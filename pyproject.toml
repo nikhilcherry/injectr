@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "injectr"
+version = "0.1.0"
+description = "Inject synthetic transit/EB/blend/starspot signals into real light curves for injection-recovery testing."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Nikhil Cherry" }]
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
+dependencies = [
+    "numpy>=1.24",
+    "batman-package>=2.4.9",
+    "pyyaml>=6.0",
+    "pandas>=2.0",
+    # batman-package imports distutils, which Python 3.12+ dropped from the
+    # stdlib; setuptools vendors the shim it needs. Not a batman-package
+    # dependency itself, so pinned here to keep `pip install` working on
+    # fresh 3.12+ environments that don't already happen to have it.
+    "setuptools",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+injectr = "injectr.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/nikhilcherry/injectr"
+
+[tool.setuptools.packages.find]
+include = ["injectr*"]
