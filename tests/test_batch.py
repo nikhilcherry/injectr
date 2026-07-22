@@ -69,3 +69,11 @@ def test_run_batch_unknown_class_raises(base_manifest, grid_yaml, tmp_path):
             base_manifest=base_manifest, classes=["not_a_class"], grid=grid_yaml,
             n_per_class=1, output_dir=tmp_path / "out", output_manifest=tmp_path / "m.csv",
         )
+
+
+def test_run_batch_empty_classes_raises(base_manifest, grid_yaml, tmp_path):
+    with pytest.raises(ValueError, match="non-empty"):
+        batch.run_batch(
+            base_manifest=base_manifest, classes=[], grid=grid_yaml,
+            n_per_class=1, output_dir=tmp_path / "out", output_manifest=tmp_path / "m.csv",
+        )

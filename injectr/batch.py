@@ -82,6 +82,9 @@ def run_batch(*, base_manifest, classes, grid, n_per_class, output_dir,
     `output_manifest`). Any output_path that already exists is skipped
     (not recomputed) but still recorded as a row.
     """
+    if not classes:
+        raise ValueError("classes must be a non-empty list")
+
     base_paths = load_base_manifest(base_manifest)
     grid_spec = load_grid(grid)
     output_dir = Path(output_dir)
