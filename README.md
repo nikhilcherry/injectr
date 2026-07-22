@@ -20,6 +20,21 @@ whatever your real target actually looks like) is a much harder and more honest 
 than white noise drawn from a Gaussian — the same "real data over synthetic for fixtures"
 principle, extended to injection-recovery.
 
+![injectr's four signal classes injected onto the same real, noisy base light curve](assets/injection_gallery.png)
+
+All four panels above share the exact same base light curve (a synthetic
+stand-in with the same white+red noise shape `injectr`'s own test fixtures
+use — gray points in every panel) and the same `seed`-derived randomness for
+reproducibility. Only the injected signal (blue) differs: `planet` is a
+single periodic dip, `eb` is a much deeper primary eclipse with a fainter
+secondary visible mid-cycle, `blend` is the same planet geometry as the
+first panel but with 50% third-light dilution roughly halving its apparent
+depth (`5,926 ppm` vs. `11,853 ppm` — this is exactly the kind of
+attenuated signal `fitr`'s `blend` vs. `planet` ambiguity check exists to
+catch), and `starspot` has no eclipse at all — just smooth rotational
+modulation, since it's the "this looks periodic but isn't a transit"
+negative-control class.
+
 ## Install
 
 `injectr` isn't published to PyPI — install straight from GitHub:
@@ -91,6 +106,17 @@ injectr batch --base-manifest base_manifest.csv --classes planet,eb,blend \
 `injectr batch` exits 0 on success. Any `output_path` that already exists is skipped
 rather than recomputed, so a killed run resumes cleanly — see
 [Batch and resumability](#batch-and-resumability) below.
+
+```mermaid
+flowchart LR
+    M["base_manifest.csv\n(quiet base .npz paths)"] --> B["injectr batch"]
+    G["grid.yaml\n(per-class param ranges)"] --> B
+    B -->|"round-robin draw,\nseed = f(--seed, class, index)"| P1["planet_0001.npz"]
+    B --> P2["eb_0001.npz"]
+    B --> P3["blend_0001.npz"]
+    B --> P4["starspot_0001.npz"]
+    B --> R["injection_manifest.csv\n(ground truth: path, class, params)"]
+```
 
 ## Base files
 
