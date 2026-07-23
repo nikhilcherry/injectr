@@ -87,11 +87,19 @@ def starspot_flux(time, *, prot, amp1=0.01, amp2=0.0, phase1=0.0, phase2=0.0):
 
 
 def transit_duration_hours(*, period, a, inc, rp):
-    """Analytic first-to-fourth-contact (T14) transit duration, in hours."""
+    """Analytic first-to-fourth-contact (T14) transit duration, in hours.
+
+    A duration is always a non-negative magnitude; an unphysical input (a
+    negative ``a``, or ``inc`` outside the (0, 180) range where sin flips
+    sign) would otherwise flip the sign of the whole expression, silently
+    producing a negative duration -- so the result is taken as its
+    absolute value rather than trying to validate every parameter that
+    could individually cause that sign flip.
+    """
     inc_rad = np.deg2rad(inc)
     b = a * np.cos(inc_rad)
     discriminant = max((1.0 + rp) ** 2 - b ** 2, 0.0)
     arg = np.sqrt(discriminant) / (a * np.sin(inc_rad))
     arg = min(max(arg, -1.0), 1.0)
     duration_days = (period / np.pi) * np.arcsin(arg)
-    return duration_days * 24.0
+    return abs(duration_days * 24.0)

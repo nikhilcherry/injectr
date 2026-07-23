@@ -64,3 +64,15 @@ def test_starspot_single_harmonic_amplitude():
 def test_transit_duration_hours_positive_and_reasonable():
     duration = models.transit_duration_hours(period=5.2, a=15.0, inc=89.0, rp=0.05)
     assert 0.0 < duration < 10.0
+
+
+def test_transit_duration_hours_never_negative_for_unphysical_a():
+    # a<0 (physically nonsensical) flips the sign of the whole expression
+    # internally; the returned duration must still be a non-negative
+    # magnitude, not a raw negative value.
+    duration = models.transit_duration_hours(period=5.0, a=-15.0, inc=89.0, rp=0.05)
+    assert duration >= 0.0
+    # and matches the magnitude of the equivalent positive-a case
+    assert duration == pytest.approx(
+        models.transit_duration_hours(period=5.0, a=15.0, inc=89.0, rp=0.05)
+    )
