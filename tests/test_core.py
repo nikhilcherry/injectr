@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from injectr import contract, core
 
@@ -13,6 +14,23 @@ def test_inject_planet_basic(base_npz):
     assert result.flux.shape == result.time.shape
     assert result.injected_depth_ppm > 0
     assert result.injected_duration_hours > 0
+
+
+@pytest.mark.parametrize("bad_period", [0, -5.2])
+@pytest.mark.parametrize("inject_fn", [core.inject_planet, core.inject_eb, core.inject_blend])
+def test_inject_rejects_non_positive_period(base_npz, inject_fn, bad_period):
+    # period<=0 divides by zero / flips sign inside transit_duration_hours,
+    # silently producing NaN flux or a nonsensical negative duration
+    # instead of a clear error.
+    with pytest.raises(ValueError, match="period must be positive"):
+        inject_fn(base_npz, period=bad_period, rp=0.05, t0=0.3)
+
+
+@pytest.mark.parametrize("bad_prot", [0, -1.0])
+def test_inject_starspot_rejects_non_positive_prot(base_npz, bad_prot):
+    # prot=0 divides by zero in starspot_flux, silently producing all-NaN flux.
+    with pytest.raises(ValueError, match="prot must be positive"):
+        core.inject_starspot(base_npz, prot=bad_prot)
 
 
 def test_inject_deterministic_without_extra_noise(base_npz):

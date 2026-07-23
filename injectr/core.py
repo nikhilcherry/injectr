@@ -52,8 +52,14 @@ def _measured_depth_ppm(model_flux: np.ndarray) -> float:
     return float((1.0 - np.min(model_flux)) * 1e6)
 
 
+def _require_positive(name: str, value: float) -> None:
+    if not value > 0:
+        raise ValueError(f"{name} must be positive, got {value}")
+
+
 def inject_planet(base_path, period, rp, t0, a=15.0, inc=89.0, seed=None,
                    extra_noise_ppm=0.0) -> InjectionResult:
+    _require_positive("period", period)
     base = contract.load_base(base_path)
     u = list(models.LD_COEFFS)
     model_flux = models.planet_flux(base["time"], period=period, rp=rp, t0=t0, a=a, inc=inc, u=u)
@@ -71,6 +77,7 @@ def inject_planet(base_path, period, rp, t0, a=15.0, inc=89.0, seed=None,
 
 def inject_eb(base_path, period, rp, t0, a=15.0, inc=89.0, secondary_scale=0.1,
               seed=None, extra_noise_ppm=0.0) -> InjectionResult:
+    _require_positive("period", period)
     base = contract.load_base(base_path)
     u = list(models.LD_COEFFS)
     model_flux = models.eclipsing_binary_flux(
@@ -91,6 +98,7 @@ def inject_eb(base_path, period, rp, t0, a=15.0, inc=89.0, secondary_scale=0.1,
 
 def inject_blend(base_path, period, rp, t0, a=15.0, inc=89.0, dilution=0.5,
                   seed=None, extra_noise_ppm=0.0) -> InjectionResult:
+    _require_positive("period", period)
     base = contract.load_base(base_path)
     u = list(models.LD_COEFFS)
     model_flux = models.blend_flux(
@@ -110,6 +118,7 @@ def inject_blend(base_path, period, rp, t0, a=15.0, inc=89.0, dilution=0.5,
 
 def inject_starspot(base_path, prot, amp1=0.01, amp2=0.0, phase1=0.0, phase2=0.0,
                      seed=None, extra_noise_ppm=0.0) -> InjectionResult:
+    _require_positive("prot", prot)
     base = contract.load_base(base_path)
     model_flux = models.starspot_flux(
         base["time"], prot=prot, amp1=amp1, amp2=amp2, phase1=phase1, phase2=phase2,
