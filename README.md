@@ -60,14 +60,20 @@ result.to_npz("data/injected/planet_0001.npz")
 The equivalent functions for the other three classes have the same shape:
 
 ```python
-injectr.inject_eb(base_path, period, rp, t0, a, inc, secondary_scale, seed=...)
-injectr.inject_blend(base_path, period, rp, t0, a, inc, dilution, seed=...)
+injectr.inject_eb(base_path, period, rp, t0, a, inc, secondary_scale, ecc=0.0, w=90.0, seed=...)
+injectr.inject_blend(base_path, period, rp, t0, a, inc, dilution, ecc=0.0, w=90.0, seed=...)
 injectr.inject_starspot(base_path, prot, amp1, amp2, phase1, phase2, seed=...)
 ```
 
 `inject_blend`'s forward model is the planet model with an extra free `dilution`
 parameter: `flux = 1 - dilution * (1 - transit_flux)`. `inject_starspot` has no eclipse,
 so `injected_depth_ppm`/`injected_duration_hours` are `None` for that class.
+
+`ecc`/`w` (eccentricity, argument of periastron in degrees) default to `0.0`/`90.0`
+(circular) and are available on `inject_planet`/`inject_eb`/`inject_blend` and their
+`--ecc`/`--w` CLI equivalents. `injected_duration_hours` applies the standard
+eccentric-orbit T14 correction (Winn 2010 eq. 16) automatically when `ecc != 0`, so
+non-circular injections still get a correct ground-truth duration.
 
 No noise is added beyond the base file's own — that real noise **is** the noise. Pass
 `extra_noise_ppm=<value>` to any `inject_*` call (or `--extra-noise-ppm` on the CLI) to

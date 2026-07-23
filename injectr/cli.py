@@ -25,9 +25,9 @@ REQUIRED_PARAMS = {
 
 # All params accepted per class (required + optional-with-default).
 CLASS_PARAMS = {
-    "planet": ["period", "rp", "t0", "a", "inc"],
-    "eb": ["period", "rp", "t0", "a", "inc", "secondary_scale"],
-    "blend": ["period", "rp", "t0", "a", "inc", "dilution"],
+    "planet": ["period", "rp", "t0", "a", "inc", "ecc", "w"],
+    "eb": ["period", "rp", "t0", "a", "inc", "secondary_scale", "ecc", "w"],
+    "blend": ["period", "rp", "t0", "a", "inc", "dilution", "ecc", "w"],
     "starspot": ["prot", "amp1", "amp2", "phase1", "phase2"],
 }
 
@@ -48,6 +48,8 @@ def _build_parser() -> argparse.ArgumentParser:
     inject_p.add_argument("--t0", type=float)
     inject_p.add_argument("--a", type=float, default=15.0)
     inject_p.add_argument("--inc", type=float, default=89.0)
+    inject_p.add_argument("--ecc", type=float, default=0.0)
+    inject_p.add_argument("--w", type=float, default=90.0)
     inject_p.add_argument("--secondary-scale", type=float, default=0.1, dest="secondary_scale")
     inject_p.add_argument("--dilution", type=float, default=0.5)
     inject_p.add_argument("--prot", type=float)

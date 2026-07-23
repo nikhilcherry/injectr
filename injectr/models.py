@@ -86,12 +86,21 @@ def starspot_flux(time, *, prot, amp1=0.01, amp2=0.0, phase1=0.0, phase2=0.0):
     return flux
 
 
-def transit_duration_hours(*, period, a, inc, rp):
-    """Analytic first-to-fourth-contact (T14) transit duration, in hours."""
+def transit_duration_hours(*, period, a, inc, rp, ecc=0.0, w=90.0):
+    """Analytic first-to-fourth-contact (T14) transit duration, in hours.
+
+    Circular-orbit case (Winn 2010, eq. 14). For ecc != 0, applies the
+    eccentric-orbit correction (Winn 2010, eq. 16):
+    sqrt(1 - ecc^2) / (1 + ecc * sin(w)). ``w`` is the argument of
+    periastron in degrees, matching batman's convention (and this module's
+    other ecc/w-accepting functions).
+    """
     inc_rad = np.deg2rad(inc)
     b = a * np.cos(inc_rad)
     discriminant = max((1.0 + rp) ** 2 - b ** 2, 0.0)
     arg = np.sqrt(discriminant) / (a * np.sin(inc_rad))
     arg = min(max(arg, -1.0), 1.0)
     duration_days = (period / np.pi) * np.arcsin(arg)
+    if ecc:
+        duration_days *= np.sqrt(1.0 - ecc ** 2) / (1.0 + ecc * np.sin(np.deg2rad(w)))
     return duration_days * 24.0

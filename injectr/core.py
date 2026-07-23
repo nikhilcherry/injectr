@@ -52,59 +52,67 @@ def _measured_depth_ppm(model_flux: np.ndarray) -> float:
     return float((1.0 - np.min(model_flux)) * 1e6)
 
 
-def inject_planet(base_path, period, rp, t0, a=15.0, inc=89.0, seed=None,
-                   extra_noise_ppm=0.0) -> InjectionResult:
+def inject_planet(base_path, period, rp, t0, a=15.0, inc=89.0, ecc=0.0, w=90.0,
+                   seed=None, extra_noise_ppm=0.0) -> InjectionResult:
     base = contract.load_base(base_path)
     u = list(models.LD_COEFFS)
-    model_flux = models.planet_flux(base["time"], period=period, rp=rp, t0=t0, a=a, inc=inc, u=u)
+    model_flux = models.planet_flux(base["time"], period=period, rp=rp, t0=t0, a=a, inc=inc,
+                                     ecc=ecc, w=w, u=u)
     flux = _apply_extra_noise(base["flux"] * model_flux, extra_noise_ppm, seed)
 
     injection_params = {"class": "planet", "period": period, "rp": rp, "t0": t0,
-                         "a": a, "inc": inc, "u": u}
+                         "a": a, "inc": inc, "ecc": ecc, "w": w, "u": u}
     return InjectionResult(
         time=base["time"], flux=flux, flux_err=base["flux_err"], label="planet",
         injection_params=injection_params, base_meta=base,
         injected_depth_ppm=_measured_depth_ppm(model_flux),
-        injected_duration_hours=float(models.transit_duration_hours(period=period, a=a, inc=inc, rp=rp)),
+        injected_duration_hours=float(
+            models.transit_duration_hours(period=period, a=a, inc=inc, rp=rp, ecc=ecc, w=w)
+        ),
     )
 
 
 def inject_eb(base_path, period, rp, t0, a=15.0, inc=89.0, secondary_scale=0.1,
-              seed=None, extra_noise_ppm=0.0) -> InjectionResult:
+              ecc=0.0, w=90.0, seed=None, extra_noise_ppm=0.0) -> InjectionResult:
     base = contract.load_base(base_path)
     u = list(models.LD_COEFFS)
     model_flux = models.eclipsing_binary_flux(
         base["time"], period=period, rp=rp, t0=t0, a=a, inc=inc,
-        secondary_scale=secondary_scale, u=u,
+        secondary_scale=secondary_scale, ecc=ecc, w=w, u=u,
     )
     flux = _apply_extra_noise(base["flux"] * model_flux, extra_noise_ppm, seed)
 
     injection_params = {"class": "eb", "period": period, "rp": rp, "t0": t0, "a": a,
-                         "inc": inc, "secondary_scale": secondary_scale, "u": u}
+                         "inc": inc, "secondary_scale": secondary_scale, "ecc": ecc, "w": w, "u": u}
     return InjectionResult(
         time=base["time"], flux=flux, flux_err=base["flux_err"], label="eb",
         injection_params=injection_params, base_meta=base,
         injected_depth_ppm=_measured_depth_ppm(model_flux),
-        injected_duration_hours=float(models.transit_duration_hours(period=period, a=a, inc=inc, rp=rp)),
+        injected_duration_hours=float(
+            models.transit_duration_hours(period=period, a=a, inc=inc, rp=rp, ecc=ecc, w=w)
+        ),
     )
 
 
 def inject_blend(base_path, period, rp, t0, a=15.0, inc=89.0, dilution=0.5,
-                  seed=None, extra_noise_ppm=0.0) -> InjectionResult:
+                  ecc=0.0, w=90.0, seed=None, extra_noise_ppm=0.0) -> InjectionResult:
     base = contract.load_base(base_path)
     u = list(models.LD_COEFFS)
     model_flux = models.blend_flux(
-        base["time"], period=period, rp=rp, t0=t0, a=a, inc=inc, dilution=dilution, u=u,
+        base["time"], period=period, rp=rp, t0=t0, a=a, inc=inc, dilution=dilution,
+        ecc=ecc, w=w, u=u,
     )
     flux = _apply_extra_noise(base["flux"] * model_flux, extra_noise_ppm, seed)
 
     injection_params = {"class": "blend", "period": period, "rp": rp, "t0": t0, "a": a,
-                         "inc": inc, "dilution": dilution, "u": u}
+                         "inc": inc, "dilution": dilution, "ecc": ecc, "w": w, "u": u}
     return InjectionResult(
         time=base["time"], flux=flux, flux_err=base["flux_err"], label="blend",
         injection_params=injection_params, base_meta=base,
         injected_depth_ppm=_measured_depth_ppm(model_flux),
-        injected_duration_hours=float(models.transit_duration_hours(period=period, a=a, inc=inc, rp=rp)),
+        injected_duration_hours=float(
+            models.transit_duration_hours(period=period, a=a, inc=inc, rp=rp, ecc=ecc, w=w)
+        ),
     )
 
 

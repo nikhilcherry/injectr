@@ -34,7 +34,7 @@ INJECT_FNS = {
 # for a given row's class.
 MANIFEST_COLUMNS = [
     "output_path", "base_path", "label", "seed", "class",
-    "period", "rp", "t0", "a", "inc", "secondary_scale", "dilution",
+    "period", "rp", "t0", "a", "inc", "ecc", "w", "secondary_scale", "dilution",
     "prot", "amp1", "amp2", "phase1", "phase2",
     "injected_depth_ppm", "injected_duration_hours",
 ]

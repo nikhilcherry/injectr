@@ -64,3 +64,19 @@ def test_starspot_single_harmonic_amplitude():
 def test_transit_duration_hours_positive_and_reasonable():
     duration = models.transit_duration_hours(period=5.2, a=15.0, inc=89.0, rp=0.05)
     assert 0.0 < duration < 10.0
+
+
+def test_transit_duration_hours_default_ecc_matches_explicit_circular():
+    circular = models.transit_duration_hours(period=5.2, a=15.0, inc=89.0, rp=0.05)
+    explicit = models.transit_duration_hours(period=5.2, a=15.0, inc=89.0, rp=0.05, ecc=0.0, w=90.0)
+    assert circular == pytest.approx(explicit)
+
+
+def test_transit_duration_hours_eccentric_orbit_correction():
+    # Winn 2010 eq. 16: T14_ecc = T14_circ * sqrt(1-e^2) / (1 + e*sin(w)).
+    # w=90 (periastron at inferior conjunction) shortens the transit duration.
+    circular = models.transit_duration_hours(period=5.2, a=15.0, inc=89.0, rp=0.05)
+    eccentric = models.transit_duration_hours(period=5.2, a=15.0, inc=89.0, rp=0.05, ecc=0.3, w=90.0)
+    expected = circular * np.sqrt(1.0 - 0.3 ** 2) / (1.0 + 0.3 * np.sin(np.deg2rad(90.0)))
+    assert eccentric == pytest.approx(expected)
+    assert eccentric < circular

@@ -8,7 +8,7 @@ def test_inject_planet_basic(base_npz):
     assert result.label == "planet"
     assert result.injection_params == {
         "class": "planet", "period": 5.2, "rp": 0.05, "t0": 0.3,
-        "a": 15.0, "inc": 89.0, "u": [0.4, 0.25],
+        "a": 15.0, "inc": 89.0, "ecc": 0.0, "w": 90.0, "u": [0.4, 0.25],
     }
     assert result.flux.shape == result.time.shape
     assert result.injected_depth_ppm > 0
@@ -65,6 +65,16 @@ def test_inject_starspot(base_npz):
         "class": "starspot", "prot": 6.2, "amp1": 0.015, "amp2": 0.004,
         "phase1": 0.5, "phase2": 1.0,
     }
+
+
+def test_inject_planet_eccentric_orbit_changes_duration_and_flux(base_npz):
+    circular = core.inject_planet(base_npz, period=5.2, rp=0.05, t0=0.3, a=15.0, inc=89.0, seed=42)
+    eccentric = core.inject_planet(base_npz, period=5.2, rp=0.05, t0=0.3, a=15.0, inc=89.0,
+                                    ecc=0.3, w=90.0, seed=42)
+    assert eccentric.injection_params["ecc"] == 0.3
+    assert eccentric.injection_params["w"] == 90.0
+    assert eccentric.injected_duration_hours != circular.injected_duration_hours
+    assert not np.array_equal(eccentric.flux, circular.flux)
 
 
 def test_extra_noise_ppm_changes_flux_and_is_seed_reproducible(base_npz):
