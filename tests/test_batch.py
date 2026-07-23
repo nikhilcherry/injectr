@@ -63,6 +63,32 @@ def test_run_batch_is_resumable(base_manifest, grid_yaml, tmp_path):
     assert mtimes_before == mtimes_after  # nothing was rewritten
 
 
+def test_resumed_run_manifest_matches_file_even_with_different_seed(base_manifest, grid_yaml, tmp_path):
+    # Resuming with a DIFFERENT --seed (or grid) than the run that created
+    # the file must not draw fresh params and record them in the manifest
+    # unused -- the manifest has to describe what's actually in the file.
+    output_dir = tmp_path / "injected"
+    output_manifest = tmp_path / "injection_manifest.csv"
+    df1 = batch.run_batch(
+        base_manifest=base_manifest, classes=["planet"], grid=grid_yaml,
+        n_per_class=1, output_dir=output_dir, output_manifest=output_manifest, seed=1,
+    )
+
+    df2 = batch.run_batch(
+        base_manifest=base_manifest, classes=["planet"], grid=grid_yaml,
+        n_per_class=1, output_dir=output_dir, output_manifest=output_manifest, seed=999,
+    )
+
+    output_path = df2.iloc[0]["output_path"]
+    actual_params = contract.load_base(output_path)["injection_params"]
+
+    assert df2.iloc[0]["period"] == pytest.approx(actual_params["period"])
+    assert df2.iloc[0]["rp"] == pytest.approx(actual_params["rp"])
+    assert df2.iloc[0]["t0"] == pytest.approx(actual_params["t0"])
+    # And the file itself was genuinely untouched (still run 1's values).
+    assert df2.iloc[0]["period"] == pytest.approx(df1.iloc[0]["period"])
+
+
 def test_run_batch_unknown_class_raises(base_manifest, grid_yaml, tmp_path):
     with pytest.raises(ValueError):
         batch.run_batch(

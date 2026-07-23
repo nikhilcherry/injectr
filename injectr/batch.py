@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from . import core
+from . import contract, core
 
 INJECT_FNS = {
     "planet": core.inject_planet,
@@ -106,17 +106,27 @@ def run_batch(*, base_manifest, classes, grid, n_per_class, output_dir,
         class_grid = grid_spec[cls]
         for i in range(n_per_class):
             base_path = next(base_cycle)
+            output_path = output_dir / f"{cls}_{i + 1:04d}.npz"
+
+            if output_path.exists():
+                # Resuming: don't draw fresh params for a file that's
+                # already on disk and then record those UNUSED params in
+                # the manifest -- if this run's --seed or --grid differs
+                # from whatever produced the existing file (a very normal
+                # thing to happen across resumed runs), the manifest would
+                # silently disagree with what's actually inside the file.
+                # Read back the params actually baked into it instead.
+                existing_params = contract.load_base(output_path).get("injection_params") or {}
+                row = {"output_path": str(output_path), "base_path": base_path,
+                       "label": cls, "seed": None, "class": cls, **existing_params}
+                rows.append(row)
+                continue
+
             draw_seed = int(np.random.SeedSequence([seed, class_idx, i]).generate_state(1)[0])
             rng = np.random.default_rng(draw_seed)
             params = _draw_params(rng, class_grid)
-
-            output_path = output_dir / f"{cls}_{i + 1:04d}.npz"
             row = {"output_path": str(output_path), "base_path": base_path,
                    "label": cls, "seed": draw_seed, "class": cls, **params}
-
-            if output_path.exists():
-                rows.append(row)
-                continue
 
             result = INJECT_FNS[cls](base_path, seed=draw_seed,
                                       extra_noise_ppm=extra_noise_ppm, **params)
