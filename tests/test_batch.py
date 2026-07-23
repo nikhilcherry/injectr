@@ -89,6 +89,27 @@ def test_resumed_run_manifest_matches_file_even_with_different_seed(base_manifes
     assert df2.iloc[0]["period"] == pytest.approx(df1.iloc[0]["period"])
 
 
+def test_run_batch_recomputes_a_corrupt_existing_output_file(base_manifest, grid_yaml, tmp_path):
+    # A previous crash mid-write (before write_injected wrote atomically)
+    # could leave a corrupt/truncated .npz at the expected output path.
+    # Resuming must recompute it, not crash the whole batch trying to
+    # read back params from a file that isn't valid.
+    output_dir = tmp_path / "injected"
+    output_dir.mkdir()
+    corrupt_path = output_dir / "planet_0001.npz"
+    corrupt_path.write_bytes(b"not a real npz file")
+
+    df = batch.run_batch(
+        base_manifest=base_manifest, classes=["planet"], grid=grid_yaml,
+        n_per_class=1, output_dir=output_dir, output_manifest=tmp_path / "m.csv",
+    )
+
+    assert len(df) == 1
+    reloaded = contract.load_base(corrupt_path)
+    assert reloaded["label"] == "planet"
+    assert df.iloc[0]["seed"] is not None  # a fresh seed was actually drawn
+
+
 def test_run_batch_unknown_class_raises(base_manifest, grid_yaml, tmp_path):
     with pytest.raises(ValueError):
         batch.run_batch(

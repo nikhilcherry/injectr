@@ -116,11 +116,19 @@ def run_batch(*, base_manifest, classes, grid, n_per_class, output_dir,
                 # thing to happen across resumed runs), the manifest would
                 # silently disagree with what's actually inside the file.
                 # Read back the params actually baked into it instead.
-                existing_params = contract.load_base(output_path).get("injection_params") or {}
-                row = {"output_path": str(output_path), "base_path": base_path,
-                       "label": cls, "seed": None, "class": cls, **existing_params}
-                rows.append(row)
-                continue
+                try:
+                    existing_params = contract.load_base(output_path).get("injection_params") or {}
+                except contract.ContractError:
+                    # Present but invalid/truncated (e.g. a killed process
+                    # left a corrupt .npz behind, back before write_injected
+                    # wrote atomically) -- fall through and redo it, rather
+                    # than crashing the whole batch trying to read it back.
+                    pass
+                else:
+                    row = {"output_path": str(output_path), "base_path": base_path,
+                           "label": cls, "seed": None, "class": cls, **existing_params}
+                    rows.append(row)
+                    continue
 
             draw_seed = int(np.random.SeedSequence([seed, class_idx, i]).generate_state(1)[0])
             rng = np.random.default_rng(draw_seed)

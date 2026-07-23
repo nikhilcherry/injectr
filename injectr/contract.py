@@ -9,6 +9,8 @@ copies need to be updated by hand.
 
 from __future__ import annotations
 
+import os
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -116,5 +118,22 @@ def write_injected(path, *, time, flux, flux_err, label, injection_params, base_
 
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez(path, **data)
+    # Atomic write (tmp file + rename): np.savez(path, ...) directly would
+    # leave a truncated, unreadable .npz behind if the process is killed
+    # mid-write -- and since a truncated file still "exists" on disk, a
+    # resumed batch run would find it and either crash trying to read it
+    # back or (worse) silently treat it as done. A unique-per-call tmp
+    # name also means two concurrent writers targeting the same path (two
+    # independently invoked batch runs racing on the same output file)
+    # don't collide on the same tmp file.
+    fd, tmp_name = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}-", suffix=".tmp")
+    tmp_path = Path(tmp_name)
+    # np.savez(path, ...) silently appends ".npz" to any target that
+    # doesn't already end in it (so passing tmp_path -- ending in ".tmp"
+    # -- would write to a different, wrong filename entirely and leave
+    # tmp_path itself as the empty file mkstemp created). Passing the open
+    # file object instead avoids that renaming behavior.
+    with os.fdopen(fd, "wb") as f:
+        np.savez(f, **data)
+    os.replace(tmp_path, path)
     return path
